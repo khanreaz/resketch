@@ -42,15 +42,15 @@ int main()
 	message_b = malloc(bch->n+bch->ecc_bits); // Bob: for quantized bits
 	assert(message_b);
 
-	recov_message_a = malloc(bch->n);
+	recov_message_a = malloc(nrPkt);
 	assert(recov_message_a);
 	// org_message_b = malloc(bch->n);
 	// assert(org_message_b);
 
 
-	rand_data_a_x = malloc(bch->n);
+	rand_data_a_x = malloc(nrPkt);
 	assert(rand_data_a_x);
-	rand_data_a_k = malloc(bch->n);
+	rand_data_a_k = malloc(nrPkt);
 	assert(rand_data_a_k);
 
 	data_a = malloc(bch->n+bch->ecc_bits); // for secure sketch bits
@@ -271,6 +271,8 @@ int main()
 				printf("%d", data_b_block1[i]);
 			}
 
+
+
 				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
 				int nrPadding_b =0;
 				nrPadding_b = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
@@ -330,6 +332,48 @@ int main()
 					if (k != 0 ){
 						printf("\nSuccessfully recovered data_a_block1 at node B\n");
 					}
+
+
+						/* Reconstructing  */
+
+						for (i =0; i < bch->n - bch->ecc_bits; i++) {
+							data_b[i] = data_b_block0[i];
+							printf("%d", data_b[i]);
+						}
+						for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
+						 data_b[(bch->n - bch->ecc_bits)+i] = data_b_block1[i];
+						printf("%d", data_b[i]);
+						}
+						/* Check if correctly reconstructed (DEBUG)*/
+						printf("\nBit mismatch after decoding message: \n");
+						for (i = 0;	i < nrPkt; i++){
+							if (data_a[i] != data_b[i]){
+								printf("%d ", i);
+								k =0;
+							}
+						}
+						if (k != 0 ){
+							printf("\nSuccessfully reconstructed \n");
+						}
+
+							/* Recovering message_a from data_b*/
+							generate_xor_vector(nrPkt, rand_data_a_x, data_b, recov_message_a);
+							printf("\nrecov_message_a			= ");
+							for (i = 0;	i < nrPkt; i++) {
+								printf("%d", recov_message_a[i]);
+							}
+							/* Check if correctly recovered (DEBUG)*/
+							printf("\nBit mismatch after decoding message: \n");
+							for (i = 0;	i < nrPkt; i++){
+								if (message_a[i] != recov_message_a[i]){
+									printf("%d ", i);
+									k =0;
+								}
+							}
+							if (k != 0 ){
+								printf("\nSuccessfully recovered message_a at node B \n");
+							}
+
 
 
 
@@ -542,9 +586,9 @@ int main()
 
 
 	free(pattern);
-	free(data_a);
-	free(data_b);
-	free(rand_data_a_x);
+	// free(data_a);
+	// free(data_b);
+	// free(rand_data_a_x);
 	free_bch(bch);
 
 
