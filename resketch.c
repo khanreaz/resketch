@@ -237,7 +237,7 @@ int main()
 						// encodebits_bch(bch, message_a, message_a+bch->n);
 						// encodebits_bch(bch, data_a, ecc_a);
 						encodebits_bch(bch, data_a_block0, ecc_a_block0);
-						encodebits_bch(bch, data_a_block0, ecc_a_block0);
+						encodebits_bch(bch, data_a_block1, ecc_a_block1);
 						printf("\necc_a_block0		= ");
 							for (j = 0;	j < bch->ecc_bits; j++) {
 							printf("%d", data_a_block0[j]);
@@ -282,8 +282,8 @@ int main()
 				}
 					/* Decoding */
 					unsigned int errloc[t];
-					memset(errloc, 0xff, t);
-					nerrors = decodebits_bch(bch, data_b, ecc_a, errloc);
+					memset(errloc, 0, t);
+					nerrors = decodebits_bch(bch, data_b_block0, ecc_a_block0, errloc);
 
 					printf("\nNr. Errors in message_b: %d\nat bit-Position: ", nerrors);
 					for(i = 0; i < nerrors; i++){
@@ -292,12 +292,12 @@ int main()
 					// printf("\n");
 
 					/*  correcting errors  */
-					correctbits_bch(bch, data_b, errloc, nerrors);
+					correctbits_bch(bch, data_b_block0, errloc, nerrors);
 
 					/* Check if data_b has been successfully decoded (only for debugging)*/
 					printf("\nBit mismatch after decoding message: \n");
 					for (i = 0;	i < bch->n - bch->ecc_bits; i++){
-						if (data_a[i] != data_b[i]){
+						if (data_a_block0[i] != data_b_block0[i]){
 							printf("%d ", i);
 							k =0;
 						}
