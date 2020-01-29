@@ -508,87 +508,19 @@ int main()
 
 
 
-    /* detect errors */
-	// unsigned int errloc[t];
-    // memset(errloc, 0xff, t);
-    // nerrors = decodebits_bch(bch, data_b, data_a+bch->n, errloc);
-
-    // printf("Errors detected: %d\nat bit-Position: ", nerrors);
-    // for(i = 0; i < nerrors; i++){
-    //     printf("%d ", errloc[i]);
-    // }
-    // printf("\n");
-
-    /* alternate correcting errors using corrupt_data function */
-
-    // corrupt_data(errloc, data_b, nerrors);
-    // for (i = 0;	i < bch->n; i++) {
-    //     printf("%d", data_b[i]);
-    // }
-
-	/* test recovering message_b from the data_b*/
-
-	// generate_xor_vector(bch->n, message_b, rand_data_a_x, data_b); // XOR quantized bits with the random vector of A
-
-	// printf("\ndata_b			= ");
-    // for (i = 0;	i < bch->n; i++) {
-    //     printf("%d", data_b[i]);
-    // }
-	// printf("\n");
 
 
-	/* Decode data_b using the ecc_a*/
-	/*
-	unsigned int errloc[t];
-    memset(errloc, 0xff, t);
-    nerrors = decodebits_bch(bch, data_b, ecc_a, errloc);
-
-    printf("\nNr. Errors in data_b: %d\nat bit-Position: ", nerrors);
-    for(i = 0; i < nerrors; i++){
-        printf("%d ", errloc[i]);
-    }
-    // printf("\n");
-
-    /*  correcting errors using corrupt_data function */
-    // corrupt_data(errloc, data_b, nerrors);
-	// printf("data_b			= ");
-    // for (i = 0;	i < bch->n; i++) {
-    //     printf("%d", data_b[i]);
-    // }
-	/* Check if data_b has been successfully decoded*/
-	// printf("\nBit mismatch data_a, data_b: \n");
-	// for (i = 0;	i < bch->n; i++){
-	// 	if (data_a[i] != data_b[i]){
-	// 		printf("%d ", i);
-	// 	}
-	// }
-
-	/* undo XOR for data_b  */
-		// generate_xor_vector(bch->n, data_b, rand_data_a_x, recov_message_a);
-		// printf("\ndata_b XOR rand_data_a(reconciled A)= ");
-    	// for (i = 0;	i < bch->n; i++) {
-        // 	printf("%d", recov_message_a[i]);
-    	// }
-	/* check if message_a is successfully recovered*/
-	// for (i = 0; i < bch->n; i++){
-	// 	if (message_a[i] == recov_message_a[i]){
-	// 		k = 0;
-	// 	}
-	// }
-
-	// if (k = 0 ){
-	// 	printf("\nSuccessfully recovered message_a at node B");
-	// }
-	// else{
-	// 	printf("\nNot recovered\n");
-	// }
 
 
 
 	free(pattern);
-	// free(data_a);
-	// free(data_b);
-	// free(rand_data_a_x);
+	free(data_a);
+	free(data_a_block0);
+	free(data_a_block1);
+	free(data_b);
+	free(data_b_block0);
+	free(data_b_block1);
+	free(rand_data_a_x);
 	free_bch(bch);
 
 
