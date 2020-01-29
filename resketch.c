@@ -128,7 +128,7 @@ int main()
 
 	/* Quantization method (2): X point sliding window  based */
 
-	int wSize = 3; // Set window size nrPkt > wSize > 1.
+	int wSize = 2; // Set window size nrPkt > wSize > 1.
   	int wNr = 0;
 
   	pe_data_a = malloc(5 * wSize * sizeof(double));
@@ -223,10 +223,10 @@ int main()
 				nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
 				printf("\nnrPadding: %d", nrPadding);
 				memset(data_a_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding);
-				printf("\ndata_a_block1		= ");
-				for (i =0; i < 71; i++) {
-						printf("%d", data_a_block1[i]);
-				}
+				// printf("\ndata_a_block1(padded)	= ");
+				// for (i =0; i < 71; i++) {
+				// 		printf("%d", data_a_block1[i]);
+				// }
 
 					/* encode   at Node A */
 					for (i = 0; i < niterations; i++) {
@@ -276,10 +276,10 @@ int main()
 				nrPadding_b = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
 				printf("\nnrPadding_b: %d", nrPadding_b);
 				memset(data_b_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding_b);
-				printf("\ndata_b_block1		= ");
-				for (i =0; i < 71; i++) {
-						printf("%d", data_b_block1[i]);
-				}
+				// printf("\ndata_b_block1(padded)	= ");
+				// for (i =0; i < 71; i++) {
+				// 		printf("%d", data_b_block1[i]);
+				// }
 					/* Decoding */
 					unsigned int errloc[t];
 					memset(errloc, 0, t);
@@ -303,7 +303,32 @@ int main()
 						}
 					}
 					if (k != 0 ){
-						printf("\nSuccessfully recovered at node B\n");
+						printf("\nSuccessfully recovered data_a_block0 at node B\n");
+					}
+
+					// unsigned int errloc[t];
+					memset(errloc, 0, t);
+					nerrors = decodebits_bch(bch, data_b_block1, ecc_a_block1, errloc);
+
+					printf("\nNr. Errors in message_b: %d\nat bit-Position: ", nerrors);
+					for(i = 0; i < nerrors; i++){
+						printf("%d ", errloc[i]);
+					}
+					// printf("\n");
+
+					/*  correcting errors  */
+					correctbits_bch(bch, data_b_block1, errloc, nerrors);
+
+					/* Check if data_b has been successfully decoded (only for debugging)*/
+					printf("\nBit mismatch after decoding message: \n");
+					for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+						if (data_a_block1[i] != data_b_block1[i]){
+							printf("%d ", i);
+							k =0;
+						}
+					}
+					if (k != 0 ){
+						printf("\nSuccessfully recovered data_a_block1 at node B\n");
 					}
 
 
