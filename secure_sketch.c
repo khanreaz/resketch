@@ -22,7 +22,7 @@ static int compar(const void *a, const void *b) {
 static void generate_error_vector(int len, int *bit, int size, unsigned int seed)
 {
 	int i, done = 0;
-    
+
 	/* corrupt data */
 	srand48(seed);
 
@@ -98,6 +98,6 @@ static void corrupt_data(int *bitflip, uint8_t *data, int ncorrupt)
             data[bitflip[i]] = 0;
         } else {
             data[bitflip[i]] = 1;
-        } 
+        }
 	}
 }

@@ -19,15 +19,10 @@ int main()
 	int t = 9;
 	int len = 0;
 	int nrPkt = 128; // to produce 128 bits it needs to be set to 128
-	int c, i, j, k, l, nerrors, nerrors_b;
-	int opt_decode = 0;
-	int opt_cache_encode = 0;
-	int niterations = 1;
-	uint8_t  *data_a, *data_b, *rand_data_a_x, *rand_data_a_k,*message_a, *message_b, *recov_message_a, *org_message_b, *ecc_a, *ecc_b, *bit_mul_a, *bit_mul_b, *sketch_a_s,*sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b;
+	int c, i, j, k, l, nerrors, nerrors_b, niterations = 1, opt_cache_encode = 0, opt_decode = 0;
+	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *rand_data_a_x, *rand_data_a_k,*message_a, *message_b, *recov_message_a, *org_message_b, *ecc_a, *ecc_b, *bit_mul_a, *bit_mul_b, *sketch_a_s,*sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b;
 	struct bch_control *bch;
-	unsigned int *pattern = NULL;
-	unsigned int tmax;
-	unsigned int generator = 0;
+	unsigned int *pattern = NULL, generator = 0, tmax;
 	double *pe_data_a, *pe_data_b, *pe_sum;
 
 	srand(time(NULL));
@@ -60,6 +55,11 @@ int main()
 
 	data_a = malloc(bch->n+bch->ecc_bits); // for secure sketch bits
 	assert(data_a);
+	data_a_block0 = malloc(bch->n - bch->ecc_bits);
+	assert(data_a_block0);
+	data_a_block1 = malloc(bch->n - bch->ecc_bits);
+	assert(data_a_block1);
+
 	data_b = malloc(bch->n+bch->ecc_bits);
 	assert(data_b);
 
@@ -163,39 +163,63 @@ int main()
 
 
 	printf("\nquantized_a(message_a) 	= ");
-    for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+    for (i = 0;	i < nrPkt; i++) {
         printf("%d", message_a[i]);
     }
 
 	printf("\nquantized_b(message_b) 	= ");
-    for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+    for (i = 0;	i < nrPkt; i++) {
         printf("%d", message_b[i]);
     }
 
 	/* Check bit mismatch between A,B after quantization*/
 
 	printf("\nBit mismatch message_a, message_b: \n");
-	for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+	for (i = 0;	i < nrPkt; i++){
 		if (message_a[i] != message_b[i]){
-			printf("%d, ", i);
+			printf("%d ", i);
 		}
 	}
 
 	/* Generate Random  Vector as same length as message_a */
-    generate_random_vector(bch->n - bch->ecc_bits, rand_data_a_x);
+    generate_random_vector(nrPkt , rand_data_a_x);
 	printf("\nrand_data_a_x		= ");
-    for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+    for (i = 0;	i < nrPkt; i++) {
         printf("%d", rand_data_a_x[i]);
     }
 	// printf("\n");
 
 		/* XOR "quantized bits with the  random_vector  */
-		generate_xor_vector(bch->n - bch->ecc_bits, message_a, rand_data_a_x, data_a);
+		generate_xor_vector(nrPkt, message_a, rand_data_a_x, data_a);
 		printf("\ndata_a			= ");
-		for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+		for (i = 0;	i < nrPkt; i++) {
 			printf("%d", data_a[i]);
 		}
 		// printf("\n");
+			/* Create blocks from data_a*/
+			/* 1st block length: bch->n - bch->ecc_bits */
+			printf("\ndata_a_block0		= ");
+			for (i =0; i < bch->n - bch->ecc_bits; i++) {
+				data_a_block0[i] = data_a[i];
+				printf("%d", data_a_block0[i]);
+			}
+			/* 2nd block length: nrPkt - (bch->n - bch->ecc_bits) */
+			printf("\ndata_a_block1		= ");
+			for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
+				data_a_block1[i] = data_a[(bch->n - bch->ecc_bits)+i];
+				printf("%d", data_a_block1[i]);
+			}
+				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
+				// TODO
+				int nrPadding =0;
+				nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
+				printf("\nnrPadding: %d", nrPadding);
+				memset(data_a_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding);
+				printf("\ndata_a_block1		= ");
+				for (i =0; i < 71; i++) {
+						printf("%d", data_a_block1[i]);
+				}
+				//EOTodo
 
 			/* encode after  at Node A */
 			for (i = 0; i < niterations; i++) {
