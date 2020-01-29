@@ -287,7 +287,7 @@ int main()
 					memset(errloc, 0, t);
 					nerrors = decodebits_bch(bch, data_b_block0, ecc_a_block0, errloc);
 
-					printf("\nNr. Errors in message_b: %d\nat bit-Position: ", nerrors);
+					printf("\nNr. Errors in data_b_block0: %d\nat bit-Position: ", nerrors);
 					for(i = 0; i < nerrors; i++){
 						printf("%d ", errloc[i]);
 					}
@@ -390,9 +390,6 @@ int main()
     //     printf("%d", rand_data_a_k[i]);
     // }
 	// printf("\n");
-
-
-
 
 
 	/* bitwise multiplication of x and r */
@@ -500,17 +497,6 @@ int main()
 	// 	printf("%d", data_b[i]);
 	// }
 	// printf("\n");
-
-
-
-
-
-
-
-
-
-
-
 
 
 	free(pattern);
