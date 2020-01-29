@@ -20,7 +20,7 @@ int main()
 	int len = 0;
 	int nrPkt = 128; // to produce 128 bits it needs to be set to 128
 	int c, i, j, k, l, nerrors, nerrors_b, niterations = 1, opt_cache_encode = 0, opt_decode = 0;
-	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *rand_data_a_x, *rand_data_a_k,*message_a, *message_b, *recov_message_a, *org_message_b, *ecc_a, *ecc_b, *bit_mul_a, *bit_mul_b, *sketch_a_s,*sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b;
+	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *data_b_block0, *data_b_block1,*rand_data_a_x, *rand_data_a_k,*message_a, *message_b, *recov_message_a, *org_message_b, *ecc_a, *ecc_a_block0, *ecc_a_block1, *ecc_b, *bit_mul_a, *bit_mul_b, *sketch_a_s,*sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b;
 	struct bch_control *bch;
 	unsigned int *pattern = NULL, generator = 0, tmax;
 	double *pe_data_a, *pe_data_b, *pe_sum;
@@ -62,9 +62,18 @@ int main()
 
 	data_b = malloc(bch->n+bch->ecc_bits);
 	assert(data_b);
+	data_b_block0 = malloc(bch->n - bch->ecc_bits);
+	assert(data_b_block0);
+	data_b_block1 = malloc(bch->n - bch->ecc_bits);
+	assert(data_b_block1);
 
 	ecc_a = malloc(bch->ecc_bits);
 	assert(ecc_a);
+	ecc_a_block0 = malloc(bch->ecc_bits);
+	assert(ecc_a_block0);
+	ecc_a_block1 = malloc(bch->ecc_bits);
+	assert(ecc_a_block1);
+
 	ecc_b = malloc(bch->ecc_bits);
 	assert(ecc_b);
 
@@ -210,7 +219,6 @@ int main()
 				printf("%d", data_a_block1[i]);
 			}
 				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
-				// TODO
 				int nrPadding =0;
 				nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
 				printf("\nnrPadding: %d", nrPadding);
@@ -219,54 +227,84 @@ int main()
 				for (i =0; i < 71; i++) {
 						printf("%d", data_a_block1[i]);
 				}
-				//EOTodo
 
-			/* encode after  at Node A */
-			for (i = 0; i < niterations; i++) {
-				// memset(message_a+bch->n, 0, bch->ecc_bits); /* since parity bits add at the end of source bits, initially setting those to 0 */
-				memset(ecc_a, 0, bch->ecc_bits);
-				// encodebits_bch(bch, message_a, message_a+bch->n);
-				encodebits_bch(bch, data_a, ecc_a);
-				printf("\necc_a			= ");
-					for (j = 0;	j < bch->ecc_bits; j++) {
-					printf("%d", data_a[j]);
+					/* encode   at Node A */
+					for (i = 0; i < niterations; i++) {
+						// memset(message_a+bch->n, 0, bch->ecc_bits); /* since parity bits add at the end of source bits, initially setting those to 0 */
+						// memset(ecc_a, 0, bch->ecc_bits);
+						memset(ecc_a_block0, 0, bch->ecc_bits);
+						memset(ecc_a_block1, 0, bch->ecc_bits);
+						// encodebits_bch(bch, message_a, message_a+bch->n);
+						// encodebits_bch(bch, data_a, ecc_a);
+						encodebits_bch(bch, data_a_block0, ecc_a_block0);
+						encodebits_bch(bch, data_a_block0, ecc_a_block0);
+						printf("\necc_a_block0		= ");
+							for (j = 0;	j < bch->ecc_bits; j++) {
+							printf("%d", data_a_block0[j]);
+							}
+							printf("\n");
 					}
-					printf("\n");
-			}
-			printf("bch->ecc: %d", bch->ecc_bits);
-		//EOEncoding at Node A
+					printf("bch->ecc: %d", bch->ecc_bits);
+					//EOEncoding at Node A
 
 
 
 	/* Reconciliation at Node B */
-		/* XOR quantized bits(message_b) with rand_data_a_x which is sent by Node A together with  ecc_a */
-		generate_xor_vector(bch->n - bch->ecc_bits, message_b, rand_data_a_x, data_b);
+		/* XOR quantized bits(message_b) with rand_data_a_x which is sent by Node A together with  ecc */
+		generate_xor_vector(nrPkt, message_b, rand_data_a_x, data_b);
+		printf("\ndata_b			= ");
+		for (i = 0;	i < nrPkt; i++) {
+			printf("%d", data_b[i]);
+		}
 
-			/* Decoding */
-			unsigned int errloc[t];
-			memset(errloc, 0xff, t);
-			nerrors = decodebits_bch(bch, data_b, ecc_a, errloc);
-
-			printf("\nNr. Errors in message_b: %d\nat bit-Position: ", nerrors);
-			for(i = 0; i < nerrors; i++){
-				printf("%d ", errloc[i]);
+			/* Create blocks from data_b*/
+			/* 1st block length: bch->n - bch->ecc_bits */
+			printf("\ndata_b_block0		= ");
+			for (i =0; i < bch->n - bch->ecc_bits; i++) {
+				data_b_block0[i] = data_b[i];
+				printf("%d", data_b_block0[i]);
 			}
-    		// printf("\n");
+			/* 2nd block length: nrPkt - (bch->n - bch->ecc_bits) */
+			printf("\ndata_b_block1		= ");
+			for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
+				data_b_block1[i] = data_b[(bch->n - bch->ecc_bits)+i];
+				printf("%d", data_b_block1[i]);
+			}
 
-			/*  correcting errors  */
-			correctbits_bch(bch, data_b, errloc, nerrors);
-
-			/* Check if data_b has been successfully decoded (only for debugging)*/
-			printf("\nBit mismatch after decoding message: \n");
-			for (i = 0;	i < bch->n - bch->ecc_bits; i++){
-				if (data_a[i] != data_b[i]){
-					printf("%d ", i);
-					k =0;
+				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
+				int nrPadding_b =0;
+				nrPadding_b = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
+				printf("\nnrPadding_b: %d", nrPadding_b);
+				memset(data_b_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding_b);
+				printf("\ndata_b_block1		= ");
+				for (i =0; i < 71; i++) {
+						printf("%d", data_b_block1[i]);
 				}
-			}
-			if (k != 0 ){
-				printf("\nSuccessfully recovered at node B\n");
-			}
+					/* Decoding */
+					unsigned int errloc[t];
+					memset(errloc, 0xff, t);
+					nerrors = decodebits_bch(bch, data_b, ecc_a, errloc);
+
+					printf("\nNr. Errors in message_b: %d\nat bit-Position: ", nerrors);
+					for(i = 0; i < nerrors; i++){
+						printf("%d ", errloc[i]);
+					}
+					// printf("\n");
+
+					/*  correcting errors  */
+					correctbits_bch(bch, data_b, errloc, nerrors);
+
+					/* Check if data_b has been successfully decoded (only for debugging)*/
+					printf("\nBit mismatch after decoding message: \n");
+					for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+						if (data_a[i] != data_b[i]){
+							printf("%d ", i);
+							k =0;
+						}
+					}
+					if (k != 0 ){
+						printf("\nSuccessfully recovered at node B\n");
+					}
 
 
 
