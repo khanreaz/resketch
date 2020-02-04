@@ -8,19 +8,22 @@
 #include "lib/bch/bch_codec.c"
 #include "secure_sketch.c"
 #include "parameter_estimator.cpp"
-#include "alice_bob_phase.c"
+// #include "alice_bob_phase.c"
+// #include "2019-07-10_16-03-24_csi_log.c"
+#include "2019-07-10_15-12-45_csi_log.c"
 
 #define MAX_ERRORS 2048
 static int bitflip[MAX_ERRORS];
 
 int main()
 {
+	time_t begin = time(NULL);
 	int m = 7;
 	int t = 9;
 	int len = 0;
 	int nrPkt = 128; // to produce 128 bits it needs to be set to 128
-	int c, i, j, k, l, nerrors, nerrors_b, niterations = 1, opt_cache_encode = 0, opt_decode = 0;
-	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *data_b_block0, *data_b_block1,*rand_data_a_x, *rand_data_a_k,*message_a, *message_b, *recov_message_a, *org_message_b, *ecc_a, *ecc_a_block0, *ecc_a_block1, *ecc_b, *bit_mul_a, *bit_mul_b, *sketch_a_s,*sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b;
+	int i, j, k, l, nerrors, niterations = 1; //c, nerrors_b,opt_cache_encode = 0, opt_decode = 0;
+	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *data_b_block0, *data_b_block1,*rand_data_a_x, *message_a, *message_b, *recov_message_a, *ecc_a, *ecc_a_block0, *ecc_a_block1;
 	struct bch_control *bch;
 	unsigned int *pattern = NULL, generator = 0, tmax;
 	double *pe_data_a, *pe_data_b, *pe_sum;
@@ -50,8 +53,8 @@ int main()
 
 	rand_data_a_x = malloc(nrPkt);
 	assert(rand_data_a_x);
-	rand_data_a_k = malloc(nrPkt);
-	assert(rand_data_a_k);
+	// rand_data_a_k = malloc(nrPkt);
+	// assert(rand_data_a_k);
 
 	data_a = malloc(bch->n+bch->ecc_bits); // for secure sketch bits
 	assert(data_a);
@@ -74,8 +77,8 @@ int main()
 	ecc_a_block1 = malloc(bch->ecc_bits);
 	assert(ecc_a_block1);
 
-	ecc_b = malloc(bch->ecc_bits);
-	assert(ecc_b);
+	// ecc_b = malloc(bch->ecc_bits);
+	// assert(ecc_b);
 
 	// bit_mul_a = malloc(bch->n+bch->ecc_bits);
 	// assert(bit_mul_a);
@@ -128,7 +131,7 @@ int main()
 
 	/* Quantization method (2): X point sliding window  based */
 
-	int wSize = 2; // Set window size nrPkt > wSize > 1.
+	int wSize = 8; // Set window size: nrPkt > wSize > 1.
   	int wNr = 0;
 
   	pe_data_a = malloc(5 * wSize * sizeof(double));
@@ -221,7 +224,7 @@ int main()
 				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
 				int nrPadding =0;
 				nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
-				printf("\nnrPadding: %d", nrPadding);
+				// printf("\nnrPadding: %d", nrPadding);
 				memset(data_a_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding);
 				// printf("\ndata_a_block1(padded)	= ");
 				// for (i =0; i < 71; i++) {
@@ -508,7 +511,9 @@ int main()
 	free(data_b_block1);
 	free(rand_data_a_x);
 	free_bch(bch);
-
+	time_t end = time(NULL);
+	printf("Time elapsed: %d sec.", (end - begin));
+	printf("\n");
 
 	//return data_a, data_b;
 	//return message_a, message_b;
