@@ -1,4 +1,4 @@
-#include <lsqcpp.h>
+#include "lib/least-squares-cpp/include/lsqcpp.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstdarg>

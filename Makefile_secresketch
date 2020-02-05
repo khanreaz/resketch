@@ -1,0 +1,16 @@
+CXX = g++
+CXXFLAGS = -fpermissive -pedantic -Wall -Wextra -Wno-error=unused-variable -O2 -std=c++11
+OBJECTS = secresketch.o
+
+all: secresketch
+	rm -f $(OBJECTS)
+
+secresketch: secresketch.o
+	$(CXX) -o secresketch secresketch.o $(CXXFLAGS) -lm
+
+secresketch.o: secresketch.c ./lib/least-squares-cpp/include/lsqcpp.h
+	$(CXX) -c $(CXXFLAGS) -Ilib/least-squares-cpp/include/ -Ilib/eigen/ secresketch.c
+
+.PHONY: all clean
+clean:
+	rm -f $(OBJECTS) secresketch

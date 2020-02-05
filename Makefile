@@ -1,15 +1,15 @@
-CC = g++
-CFLAGS = -fpermissive -pedantic -Wall -Wextra -Wno-error=unused-variable -O2
+CXX = g++
+CXXFLAGS = -fpermissive -pedantic -Wall -Wextra -Wno-error=unused-variable -O2 -std=c++11
 OBJECTS = resketch.o
 
 all: resketch
 	rm -f $(OBJECTS)
 
 resketch: resketch.o
-	$(CC) -o resketch resketch.o $(CFLAGS) -lm
+	$(CXX) -o resketch resketch.o $(CXXFLAGS) -lm
 
 resketch.o: resketch.c ./lib/least-squares-cpp/include/lsqcpp.h
-	$(CC) -c $(CFLAGS) -Ilib/least-squares-cpp/include/ -Ilib/eigen/ resketch.c
+	$(CXX) -c $(CXXFLAGS) -Ilib/least-squares-cpp/include/ -Ilib/eigen/ resketch.c
 
 .PHONY: all clean
 clean:
