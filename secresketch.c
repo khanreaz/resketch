@@ -8,9 +8,9 @@
 #include "lib/bch/bch_codec.c"
 #include "secure_sketch.c"
 #include "parameter_estimator.cpp"
-// #include "alice_bob_phase.c"
+#include "alice_bob_phase.c"
 // #include "2019-07-10_16-03-24_csi_log.c"
-#include "2019-07-10_15-12-45_csi_log.c"
+// #include "2019-07-10_15-12-45_csi_log.c"
 
 #define MAX_ERRORS 2048
 static int bitflip[MAX_ERRORS];
@@ -23,7 +23,7 @@ int main()
 	int len = 0;
 	int nrPkt = 128; // to produce 128 bits it needs to be set to 128
 	int i, j, k, l, nerrors, niterations = 1; //c, nerrors_b,opt_cache_encode = 0, opt_decode = 0;
-	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *data_b_block0, *data_b_block1,*rand_data_a_x, *message_a, *message_b, *recov_message_a, *ecc_a, *ecc_a_block0, *ecc_a_block1;
+	uint8_t  *data_a, *data_a_block0, *data_a_block1, *data_b, *data_b_block0, *data_b_block1,*rand_data_a_x, *message_a, *message_b, *recov_message_a, *ecc_b, *ecc_a_block0, *ecc_a_block1;
 	uint8_t *rand_data_a_k, *bit_mul_a, *bit_mul_b, *sketch_a_R, *sketch_a_r, *sketch_a_s, *sketch_b, *r1_b, *r2_b, *r3_b, *wclean_b; // for secresketch
 	struct bch_control *bch;
 	unsigned int *pattern = NULL, generator = 0, tmax;
@@ -71,15 +71,15 @@ int main()
 	data_b_block1 = malloc(bch->n - bch->ecc_bits);
 	assert(data_b_block1);
 
-	ecc_a = malloc(bch->ecc_bits);
-	assert(ecc_a);
+	// ecc_a = malloc(bch->ecc_bits);
+	// assert(ecc_a);
 	ecc_a_block0 = malloc(bch->ecc_bits);
 	assert(ecc_a_block0);
 	ecc_a_block1 = malloc(bch->ecc_bits);
 	assert(ecc_a_block1);
 
-	// ecc_b = malloc(bch->ecc_bits);
-	// assert(ecc_b);
+	ecc_b = malloc(bch->ecc_bits);
+	assert(ecc_b);
 
 	bit_mul_a = malloc(bch->n+bch->ecc_bits);
 	assert(bit_mul_a);
@@ -134,7 +134,7 @@ int main()
 	// }
 	// EOS
 
-	/* Quantization method (2): X point sliding window  based */
+	/* Quantization method (2): X point moving window  based */
 
 	int wSize = 3; // Set window size: nrPkt > wSize > 1.
   	int wNr = 0;
@@ -206,6 +206,21 @@ int main()
 				data_a_block0[i] = message_a[i];
 				printf("%d", data_a_block0[i]);
 			}
+			/* 2nd block length: nrPkt - (bch->n - bch->ecc_bits) */
+			printf("\ndata_a_block1		= ");
+			for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
+				data_a_block1[i] = message_a[(bch->n - bch->ecc_bits)+i];
+				printf("%d", data_a_block1[i]);
+			}
+				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
+				int nrPadding =0;
+				nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
+				// printf("\nnrPadding: %d", nrPadding);
+				memset(data_a_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding);
+				printf("\ndata_a_block1(padded)	= ");
+				for (i =0; i < 71; i++) {
+						printf("%d", data_a_block1[i]);
+				}
 				/* Generate Random  Vector as same length as message_a */
 				generate_random_vector(bch->n - bch->ecc_bits , rand_data_a_x);
 				printf("\nrand_data_a_x		= ");
@@ -223,27 +238,13 @@ int main()
 					// printf("\n");
 
 
-			/* 2nd block length: nrPkt - (bch->n - bch->ecc_bits) */
-			// printf("\ndata_a_block1		= ");
-			// for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
-				// data_a_block1[i] = data_a[(bch->n - bch->ecc_bits)+i];
-				// printf("%d", data_a_block1[i]);
-			// }
-				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
-				// int nrPadding =0;
-				// nrPadding = ((bch->n - bch->ecc_bits)  - (nrPkt - (bch->n - bch->ecc_bits)));
-				// printf("\nnrPadding: %d", nrPadding);
-				// memset(data_a_block1 + nrPkt - (bch->n - bch->ecc_bits), 0, nrPadding);
-				// printf("\ndata_a_block1(padded)	= ");
-				// for (i =0; i < 71; i++) {
-				// 		printf("%d", data_a_block1[i]);
-				// }
+
 
 					/* */
 						/* Generate additional Random  Vector  */
  						generate_random_vector(bch->n - bch->ecc_bits, rand_data_a_k);
- 						memset(rand_data_a_k+bch->ecc_bits, 0, bch->ecc_bits);// memset(ecc_a_block0, 0, bch->ecc_bits); /* since parity bits add at the end of source bits, initially setting those to 0 */
-						encodebits_bch(bch, rand_data_a_k, rand_data_a_k+bch->ecc_bits);
+ 						memset(ecc_a_block0, 0, bch->ecc_bits);// memset(ecc_a_block0, 0, bch->ecc_bits); /* since parity bits add at the end of source bits, initially setting those to 0 */
+						encodebits_bch(bch, rand_data_a_k, ecc_a_block0);
 
 						printf("\nrand_data_a_k(r)	= ");
  						for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
@@ -260,6 +261,9 @@ int main()
  							printf("%d", bit_mul_a[i]);
  						}
  						printf("\n");
+						/* test with encoding bit_mul_a instead of rand_data_a_k */
+						memset(ecc_a_block1, 0, bch->ecc_bits);// memset(ecc_a_block0, 0, bch->ecc_bits); /* since parity bits add at the end of source bits, initially setting those to 0 */
+						encodebits_bch(bch, bit_mul_a, ecc_a_block1);
 
  						/* XOR "message bits with x dot r  */
  						generate_xor_vector(bch->n - bch->ecc_bits, data_a_block0, bit_mul_a, sketch_a_s);
@@ -274,100 +278,19 @@ int main()
 
 
 	/* Reconciliation at Node B */
-		/*Generate r1 by XOR message_b and sketch_a_s (it is sent by Node A) */
-		generate_xor_vector(bch->n, message_b,sketch_a_s , r1_b);
-
-		printf("\nr1			= ");
-		for (i = 0;	i < bch->n; i++) {
-			printf("%d", r1_b[i]);
-		}
-		printf("\n");
-
-			/* BCH decode r1 */
-			unsigned int errloc[t];
-			memset(errloc, 0, t);
-			nerrors = decodebits_bch(bch, r1_b, r1_b+bch->ecc_bits, errloc);
-			printf("Errors detected: %d\nat bit-Position: ", nerrors);
-			for(i = 0; i < nerrors; i++){
-				printf("			%d ", errloc[i]);
-			}
-			printf("\n");
-
-
-			/*correction*/
-			corrupt_data(errloc, r1_b, nerrors);
-			/*after BCH decoding r1 becomes r2*/
-			printf("Decoded r1(r2)		= ");
-			for (i = 0;	i < bch->n; i++) {
-				printf("%d", r1_b[i]);
-			}
-			printf("\n");
-
-
-
-
-	/* bch encode r2,  it becomes r3 */
-	// for (i = 0; i < niterations; i++) {
-	// 	memset(r1_b+bch->n, 0, bch->ecc_bits);
-    //     encodebits_bch(bch, r1_b, r1_b+bch->n);
-    //     printf("\nr3         		= ");
-    //     for (j = 0;	j < bch->n; j++) {
-    //         printf("%d", r1_b[j]);
-    //     }
-    //     printf("\n");
-	// }
-
-
-
-	/*Bitwise Multiplication of r3 and rand_data_a_x*/
-
-	// printf("r3 dot x         	= ");
-	// for (i = 0; i < bch->n ; i++){
-	// 	bit_mul_b[i] = r1_b[i] * rand_data_a_x[i];
-	// 	printf("%d", bit_mul_b[i]);
-
-	// }
-	// printf("\n");
-
-	/* XOR sketch_a_s with (r3 dot x) to genrate wclean_b */
-	// generate_xor_vector(bch->n, sketch_a_s, bit_mul_b , wclean_b);
-	// printf("Wclean         		= ");
-	// for (i = 0; i < bch->n ; i++){
-	// 	printf("%d", wclean_b[i]);
-	// }
-	// printf("\n");
-
-	// for visual comparison printing again data_a
-	// printf("\ndata_a			= ");
-    // for (i = 0;	i < bch->n; i++) {
-    //     printf("%d", data_a[i]);
-    // }
-	// printf("\n");
-
-
-	/* XOR wclean_b with rand_data_a_x to genrate data_b */
-	// generate_xor_vector(bch->n, wclean_b, rand_data_a_x , data_b);
-	// printf("date_b         		= ");
-	// for (i = 0; i < bch->n ; i++){
-	// 	printf("%d", data_b[i]);
-	// }
-	// printf("\n");
-
 			/* Create blocks from data_b*/
 			/* 1st block length: bch->n - bch->ecc_bits */
-			// printf("\ndata_b_block0		= ");
-			// for (i =0; i < bch->n - bch->ecc_bits; i++) {
-			// 	data_b_block0[i] = data_b[i];
-			// 	printf("%d", data_b_block0[i]);
-			// }
+			printf("\ndata_b_block0		= ");
+			for (i =0; i < bch->n - bch->ecc_bits; i++) {
+				data_b_block0[i] = message_b[i];
+				printf("%d", data_b_block0[i]);
+			}
 			/* 2nd block length: nrPkt - (bch->n - bch->ecc_bits) */
 			// printf("\ndata_b_block1		= ");
 			// for (i =0; i < nrPkt - (bch->n - bch->ecc_bits); i++) {
-			// 	data_b_block1[i] = data_b[(bch->n - bch->ecc_bits)+i];
+			// 	data_b_block1[i] = message_b[(bch->n - bch->ecc_bits)+i];
 			// 	printf("%d", data_b_block1[i]);
 			// }
-
-
 
 				/* Padding for the 2nd block to make length: bch->n - bch->ecc_bits */
 				// int nrPadding_b =0;
@@ -378,6 +301,100 @@ int main()
 				// for (i =0; i < 71; i++) {
 				// 		printf("%d", data_b_block1[i]);
 				// }
+		/*Generate r1 by XOR message_b and sketch_a_s (it is sent by Node A) */
+		generate_xor_vector(bch->n - bch->ecc_bits, data_b_block0,sketch_a_s , r1_b);
+
+		printf("\nr1			= ");
+		for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+			printf("%d", r1_b[i]);
+		}
+		printf("\n");
+
+		/* Check bit mismatch between mismatch scetch_a, r1_b */
+
+		printf("\nBit mismatch scetch_a_s, r1_b: \n");
+		for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+			if (r1_b[i] != sketch_a_s[i]){
+				printf("%d ", i);
+			}
+		}
+			/* BCH decode r1 */
+			unsigned int errloc[t];
+			memset(errloc, 0, t);
+			nerrors = decodebits_bch(bch, r1_b, ecc_a_block1, errloc);
+			printf("\nErrors detected: %d\nat bit-Position: ", nerrors);
+			for(i = 0; i < nerrors; i++){
+				printf(" %d ", errloc[i]);
+			}
+			printf("\n");
+
+
+			/*correction*/
+			corrupt_data(errloc, r1_b, nerrors);
+			/*after BCH decoding r1 becomes r2*/
+			printf("Decoded r1(=r2)		= ");
+			for (i = 0;	i < bch->n - bch->ecc_bits; i++) {
+				printf("%d", r1_b[i]);
+			}
+			printf("\n");
+
+
+				/* bch encode r2,  it becomes r3 */
+				memset(ecc_b, 0, bch->ecc_bits);
+				encodebits_bch(bch, r1_b, ecc_b);
+				printf("\nr3			= ");
+				for (j = 0;	j < bch->n - bch->ecc_bits; j++) {
+					printf("%d", r1_b[j]);
+				}
+				printf("\n");
+
+
+					/*Bitwise Multiplication of r3 and rand_data_a_x*/
+
+					printf("r3 dot x         	= ");
+					for (i = 0; i < bch->n - bch->ecc_bits ; i++){
+						bit_mul_b[i] = r1_b[i] * rand_data_a_x[i];
+						printf("%d", bit_mul_b[i]);
+
+					}
+					printf("\n");
+
+						/* XOR sketch_a_s with (r3 dot x) to genrate wclean_b */
+						generate_xor_vector(bch->n - bch->ecc_bits, sketch_a_s, bit_mul_b , wclean_b);
+						printf("Wclean         		= ");
+						for (i = 0; i < bch->n - bch->ecc_bits ; i++){
+							printf("%d", wclean_b[i]);
+						}
+						printf("\n");
+
+						/* Check bit mismatch between mismatch scetch_a, r1_b */
+
+						printf("\nBit mismatch data_b_block0, wclean_b: \n");
+						for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+							if (wclean_b[i] != data_b_block0[i]){
+								printf("%d ", i);
+							}
+						}
+
+
+
+							/* XOR wclean_b with rand_data_a_x  */
+							generate_xor_vector(bch->n - bch->ecc_bits, wclean_b, rand_data_a_x , data_b);
+							printf("\ndate_b         		= ");
+							for (i = 0; i < bch->n - bch->ecc_bits ; i++){
+								printf("%d", data_b[i]);
+							}
+							printf("\n");
+
+							/* Check bit mismatch between mismatch scetch_a, r1_b */
+
+							printf("\nBit mismatch data_b, sketch_a_R: \n");
+							for (i = 0;	i < bch->n - bch->ecc_bits; i++){
+								if (data_b[i] != sketch_a_R[i]){
+									printf("%d ", i);
+									k = 0;
+								}
+							}
 					/* Decoding */
 					// unsigned int errloc[t];
 					// memset(errloc, 0, t);
@@ -471,13 +488,8 @@ int main()
 						// 	}
 
 
-
-	/* decode */
-
 	// function [sketch_a_s, rand_data_a_x, data_a] = secure_sketch_generate(message_a, k)
 	// function  data_a = secure_sketch_reproduce(message_b, sketch_a_s, rand_data_a_x, k)
-
-
 
 
 	free(pattern);
