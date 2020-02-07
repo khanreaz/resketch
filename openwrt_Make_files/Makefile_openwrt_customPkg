@@ -1,0 +1,72 @@
+
+include $(TOPDIR)/rules.mk
+
+# Name, version and release number
+# The name and version of your package are used to define the variable to point to the build directory of your package: $(PKG_BUILD_DIR)
+PKG_NAME:=simple_probing
+PKG_VERSION:=1.0
+PKG_RELEASE:=1
+
+# Source settings (i.e. where to find the source codes)
+# This is a custom variable, used below
+SOURCE_DIR:=/home/reaz/Documents/gitlab/autokey/code
+
+include $(INCLUDE_DIR)/package.mk
+
+# Package definition; instructs on how and where our package will appear in the overall configuration menu ('make menuconfig')
+define Package/simple_probing
+ SECTION:=autokey
+ CATEGORY:=Autokey
+ SUBMENU:=Probing
+ DEPENDS:=+libstdcpp
+ TITLE:=Simple probing application.
+endef
+
+# Package description; a more verbose description on what our package does
+define Package/simple_probing/description
+  A simple probing application to collect channel state information measurements.
+endef
+
+# Package preparation instructions; create the build directory and copy the source code.
+# The last command is necessary to ensure our preparation instructions remain compatible with the patching system.
+define Build/Prepare
+	mkdir -p $(PKG_BUILD_DIR)
+	mkdir -p $(PKG_BUILD_DIR)/measuring
+	# mkdir -p $(PKG_BUILD_DIR)/utils
+	mkdir -p $(PKG_BUILD_DIR)/keygen/cpp
+	# mkdir -p $(PKG_BUILD_DIR)/timesync
+	# mkdir -p $(PKG_BUILD_DIR)/quantization
+
+	cp -Lr $(SOURCE_DIR)/measuring/* $(PKG_BUILD_DIR)/measuring/
+	# cp -Lr $(SOURCE_DIR)/utils/* $(PKG_BUILD_DIR)/utils/
+	cp -Lr $(SOURCE_DIR)/keygen/cpp/* $(PKG_BUILD_DIR)/keygen/cpp/
+	# cp -Lr $(SOURCE_DIR)/timesync/* $(PKG_BUILD_DIR)/timesync/
+	# cp -Lr $(SOURCE_DIR)/quantization/* $(PKG_BUILD_DIR)/quantization
+
+	$(Build/Patch)
+endef
+
+# Package build instructions; invoke the GNU make tool to build our package
+define Build/Compile
+	$(MAKE) -C $(PKG_BUILD_DIR)/measuring \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+
+	$(MAKE) -C $(PKG_BUILD_DIR)/measuring/autocorrelation \
+	CC="$(TARGET_CC)" \
+	CXX="$(TARGET_CXX)" \
+	CFLAGS="$(TARGET_CFLAGS)" \
+	LDFLAGS="$(TARGET_LDFLAGS)"
+endef
+
+# Package install instructions; create a directory inside the package to hold our executable, and then copy the executable we built previously into the folder
+define Package/simple_probing/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/measuring/resketch $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/measuring/autocorrelation/csi_autocorrelation $(1)/usr/bin
+endef
+
+# This command is always the last, it uses the definitions and variables we give above in order to get the job done
+$(eval $(call BuildPackage,simple_probing))

@@ -1,0 +1,32 @@
+CC = gcc
+CXX = g++
+CFLAGS = -std=gnu11 -pedantic -Wall -Wextra -O2 -lm -lstdc++
+CXXFLAGS = -fpermissive -pedantic -Wall -Wextra -Wno-error=unused-variable -O2 -std=c++11
+
+OBJECTS = resketch.o
+
+RESKETCH_OBJECTS = resketch.o
+
+all: resketch
+
+resketch: $(RESKETCH_OBJECTS)
+	$(CXX) -o resketch $(RESKETCH_OBJECTS) $(CXXFLAGS) -lm
+
+resketch.o: resketch.c ./lib/least-squares-cpp/include/lsqcpp.h
+	$(CXX) -c $(CXXFLAGS) -Ilib/least-squares-cpp/include/ -Ilib/eigen/ resketch.c -lm -lstdc++
+
+#parameter_estimator.o: ../keygen/cpp/parameter_estimator.cpp ../keygen/cpp/parameter_estimator.h ../keygen/cpp/least-squares-cpp/include/lsqcpp.h
+	#$(CXX) -c $(CXXFLAGS) -I../keygen/cpp/least-squares-cpp/include/ -I../keygen/cpp/eigen/ ../keygen/cpp/parameter_estimator.cpp -lm -lstdc++
+
+#secure_sketch.o: ./secure_sketch.c ./secure_sketch.h
+#	$(CC) -o $(CFLAGS) ./secure_sketch.c -lm -lstdc++
+
+#bch_codec.o: ./lib/bch/bch_codec.c ../lib/bch/bch_codec.h
+#	$(CXX) -o $(CXXFLAGS) ./lib/bch/bch_codec.c -lm -lstdc++
+
+
+
+
+.PHONY: all clean
+clean:
+	rm -f resketch $(OBJECTS)
