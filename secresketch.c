@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 #include <time.h>
 #include <unistd.h>
 #include "lib/bch/bch_codec.c"
@@ -653,6 +654,40 @@ printf("\n**** Node B reconciles data_b_block1 ****\n");
 								printf("%d", message_b[i]);
 							}
 							printf("\nNr. of Bits		= %d", i);
+
+
+	/* Calculate Metric Entropy */
+	 double entropy_H;
+	// H(X) = [-[(freq_0)log2(freq_0))+((freq_1)log2(freq_1))]] / number of bits ;
+
+
+		/* Calculate frequency of each alphabet */
+		double freq_0;
+		double c;
+
+		for (int i = 0; i < nrPkt; i++) {
+			if (message_a[i] == 0)
+				++c;
+		}
+		freq_0 = c / nrPkt;
+		printf("\nfreq_0: %f", freq_0);
+
+
+		double freq_1;
+		c =0.0;
+
+		for (int i = 0; i < nrPkt; i++) {
+			if (message_a[i] == 1)
+				++c;
+		}
+		freq_1 = c / nrPkt;
+		printf("\nfreq_1: %f", freq_1);
+
+		entropy_H = (- ((freq_0 * log2(freq_0)) + (freq_1 * log2(freq_1)))) / nrPkt; // freq_0 * (log2 (freq_0));
+		printf("\nEntropy: %f", entropy_H);
+
+
+
 
 
 	/* Common */
