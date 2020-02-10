@@ -657,6 +657,7 @@ printf("\n**** Node B reconciles data_b_block1 ****\n");
 
 
 	/* Calculate Metric Entropy */
+	printf("\n**** Metric entropy of message_a ****\n");
 	 double entropy_H;
 	// H(X) = [-[(freq_0)log2(freq_0))+((freq_1)log2(freq_1))]] / number of bits ;
 
@@ -683,8 +684,41 @@ printf("\n**** Node B reconciles data_b_block1 ****\n");
 		freq_1 = c / nrPkt;
 		printf("\nfreq_1: %f", freq_1);
 
-		entropy_H = (- ((freq_0 * log2(freq_0)) + (freq_1 * log2(freq_1)))) / nrPkt; // freq_0 * (log2 (freq_0));
-		printf("\nEntropy: %f", entropy_H);
+		entropy_H = (- ((freq_0 * log2(freq_0)) + (freq_1 * log2(freq_1)))) / nrPkt;
+		printf("\nEntropy of messsage_a: %f", entropy_H);
+
+		/*  Compare entropy of message_a with PRNG*/
+		printf("\n**** Entropy of entropy_PRNG ****\n");
+		double entropy_PRNG;
+
+		generate_random_vector(nrPkt , rand_data_a_x);
+
+		/* Calculate frequency of each alphabet */
+		// double freq_0;
+		// double c;
+
+		for (int i = 0; i < nrPkt; i++) {
+			if (rand_data_a_x[i] == 0)
+				++c;
+		}
+		freq_0 = c / nrPkt;
+		printf("\nfreq_0: %f", freq_0);
+
+
+		// double freq_1;
+		c =0.0;
+
+		for (int i = 0; i < nrPkt; i++) {
+			if (rand_data_a_x[i] == 1)
+				++c;
+		}
+		freq_1 = c / nrPkt;
+		printf("\nfreq_1: %f", freq_1);
+
+		entropy_PRNG = (- ((freq_0 * log2(freq_0)) + (freq_1 * log2(freq_1)))) / nrPkt;
+		printf("\nMetic entropy of PRNG: %f\n", entropy_PRNG);
+
+
 
 
 
@@ -707,7 +741,7 @@ printf("\n**** Node B reconciles data_b_block1 ****\n");
 
 
 	time_t end = time(NULL);
-	printf("\nTime elapsed: %d sec.", (end - begin));
+	printf("\nTotal time elapsed: %d sec.", (end - begin));
 	printf("\n");
 
 
