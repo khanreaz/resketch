@@ -105,16 +105,19 @@ int main()
 
 	data_b_block = malloc( nrPkt * sizeof(uint8_t));
 	assert(data_b_block);
+
 	r1_b = malloc( bch->n - bch->ecc_bits * sizeof(uint8_t));
 	assert(r1_b);
+
 	bit_mul_b =  malloc( bch->n - bch->ecc_bits * sizeof(uint8_t));
 	assert(bit_mul_b);
-	// wclean_b = malloc( bch->n - bch->ecc_bits * sizeof(uint8_t));
-	// assert(data_b_block);
+
 	ecc_b = malloc( bch->n - bch->ecc_bits * sizeof(uint8_t));
 	assert(ecc_b);
+
 	recov_sketch_R_block = malloc(bch->n - bch->ecc_bits * sizeof(uint8_t));
 	assert(recov_sketch_R_block);
+
 	recov_data_a_block = malloc(bch->n - bch->ecc_bits * sizeof(uint8_t));
 	assert(data_b_block);
 
