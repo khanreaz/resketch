@@ -82,7 +82,21 @@ static void generate_xor_vector(int len, uint8_t *message, uint8_t *vector, uint
         data[i] = message[i] ^ vector[i];
     }
 }
-
+/**
+ * Bitwise Multiplication data1 with data2
+ *
+ * @param len Length of message (also vector and data).
+ * @param data1 Reference to the message vector.
+ * @param data2 Reference to the vector containing random bits.
+ * @param result Reference to the vector that the result will be written to.
+ */
+static void generate_mul_vector(int len, uint8_t *data1, uint8_t *data2, uint8_t *result)
+{
+	int i;
+	for (i = 0;	i < len; i++) {
+        result[i] = data1[i] * data2[i];
+    }
+}
 /**
  * Flipping Bits in the given data vector.
  *
@@ -101,3 +115,21 @@ static void corrupt_data(int *bitflip, uint8_t *data, int ncorrupt)
         }
 	}
 }
+
+// char *bin2hex(const unsigned char *bin, size_t len)
+// {
+// 	char   *out;
+// 	size_t  i;
+
+// 	if (bin == NULL || len == 0)
+// 		return NULL;
+
+// 	out = malloc(len*2+1);
+// 	for (i=0; i<len; i++) {
+// 		out[i*2]   = "0123456789ABCDEF"[bin[i] >> 4];
+// 		out[i*2+1] = "0123456789ABCDEF"[bin[i] & 0x0F];
+// 	}
+// 	out[len*2] = '\0';
+
+// 	return out;
+// }
