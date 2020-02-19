@@ -2,14 +2,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-static int rev8(int bit)
-{
-	return (bit & ~7)|(7-(bit & 7));
-}
+// static int rev8(int bit)
+// {
+// 	return (bit & ~7)|(7-(bit & 7));
+// }
 
-static int compar(const void *a, const void *b) {
-    return *(int*)a - *(int*)b;
-}
+// static int compar(const void *a, const void *b) {
+//     return *(int*)a - *(int*)b;
+// }
 
 /**
  * Introduce up to t errors, generates a vector containing positions at which errors will occur.
@@ -19,38 +19,38 @@ static int compar(const void *a, const void *b) {
  * @param size Number of errors.
  * @param seed Seed for randomization.
  */
-static void generate_error_vector(int len, int *bit, int size, unsigned int seed)
-{
-	int i, done = 0;
+// static void generate_error_vector(int len, int *bit, int size, unsigned int seed)
+// {
+// 	int i, done = 0;
 
-	/* corrupt data */
-	srand48(seed);
+// 	/* corrupt data */
+// 	srand48(seed);
 
-	while (!done) {
-		for (i = 0; i < size; i++) {
-			bit[i] = lrand48() % len;
-		}
-		qsort(bit, size, sizeof(int), compar);
-		done = 1;
-		for (i = 0; i < size-1; i++) {
-			if (bit[i] == bit[i+1]) {
-				if ((i > 0) && (bit[i-1]+1 < bit[i])) {
-					bit[i]--;
-					continue;
-				}
-				if ((i+1 < size-1) && (bit[i+1]+1 < bit[i+2])) {
-					bit[i+1]++;
-					continue;
-				}
-				done = 0;
-				break;
-			}
-		}
-	}
-	for (i = 0; i < size; i++) {
-		bit[i] = rev8(bit[i]);
-	}
-}
+// 	while (!done) {
+// 		for (i = 0; i < size; i++) {
+// 			bit[i] = lrand48() % len;
+// 		}
+// 		qsort(bit, size, sizeof(int), compar);
+// 		done = 1;
+// 		for (i = 0; i < size-1; i++) {
+// 			if (bit[i] == bit[i+1]) {
+// 				if ((i > 0) && (bit[i-1]+1 < bit[i])) {
+// 					bit[i]--;
+// 					continue;
+// 				}
+// 				if ((i+1 < size-1) && (bit[i+1]+1 < bit[i+2])) {
+// 					bit[i+1]++;
+// 					continue;
+// 				}
+// 				done = 0;
+// 				break;
+// 			}
+// 		}
+// 	}
+// 	for (i = 0; i < size; i++) {
+// 		bit[i] = rev8(bit[i]);
+// 	}
+// }
 
 /**
  * Generates Vector with random binary entries.
