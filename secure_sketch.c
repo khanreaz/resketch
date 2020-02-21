@@ -1,3 +1,25 @@
+/*
+ * Original from: https://github.com/Parrot-Developers/bch/blob/master/Documentation/bch/tu_correct.c
+ */
+ 
+/*
+ * Copyright (C) 2011 Parrot S.A.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -52,69 +74,7 @@
 // 	}
 // }
 
-/**
- * Generates Vector with random binary entries.
- *
- * @param len Length of Vector.
- * @param data Reference to the vector that the result will be written to.
- */
-static void generate_random_vector(int len, uint8_t *data)
-{
-	int i;
-	for (i = 0; i < len; i++)
-    {
-        data[i] = rand()%2;
-    }
-}
 
-/**
- * Bitwise XOR message with given vector
- *
- * @param len Length of message (also vector and data).
- * @param message Reference to the message vector.
- * @param vector Reference to the vector containing random bits.
- * @param data Reference to the vector that the result will be written to.
- */
-static void generate_xor_vector(int len, uint8_t *message, uint8_t *vector, uint8_t *data)
-{
-	int i;
-	for (i = 0;	i < len; i++) {
-        data[i] = message[i] ^ vector[i];
-    }
-}
-/**
- * Bitwise Multiplication data1 with data2
- *
- * @param len Length of message (also vector and data).
- * @param data1 Reference to the message vector.
- * @param data2 Reference to the vector containing random bits.
- * @param result Reference to the vector that the result will be written to.
- */
-static void generate_mul_vector(int len, uint8_t *data1, uint8_t *data2, uint8_t *result)
-{
-	int i;
-	for (i = 0;	i < len; i++) {
-        result[i] = data1[i] * data2[i];
-    }
-}
-/**
- * Flipping Bits in the given data vector.
- *
- * @param bitflip Vector containing the positions at which the bits will be flipped.
- * @param ncorrupt Number of Errors (Length of bitflip).
- * @param data Reference to the vector that the result will be written to.
- */
-static void corrupt_data(int *bitflip, uint8_t *data, int ncorrupt)
-{
-	int i;
-	for (i = 0; i < ncorrupt; i++) {
-        if(data[bitflip[i]] == 1){
-            data[bitflip[i]] = 0;
-        } else {
-            data[bitflip[i]] = 1;
-        }
-	}
-}
 
 // char *bin2hex(const unsigned char *bin, size_t len)
 // {

@@ -1,15 +1,23 @@
+CC = gcc
 CXX = g++
-CXXFLAGS = -fpermissive -pedantic -Wall -Wextra -Wno-error=unused-variable -O2 -std=c++11
-OBJECTS = secresketch.o
+CFLAGS = -std=gnu11 -pedantic -Wall -Wextra -O2
+CXXFLAGS = -pedantic -Wall -Wextra -Wno-error=unused-variable -O2 -std=c++11
+OBJECTS = secresketch.o bch_codec.o parameter_estimator.o
 
 all: secresketch
 	rm -f $(OBJECTS)
 
-secresketch: secresketch.o
-	$(CXX) -o secresketch secresketch.o $(CXXFLAGS) -lm
+secresketch: secresketch.o bch_codec.o parameter_estimator.o
+	$(CC) -o secresketch $(OBJECTS) $(CFLAGS) -lm -lstdc++
 
-secresketch.o: secresketch.c ./lib/least-squares-cpp/include/lsqcpp.h
-	$(CXX) -c $(CXXFLAGS) -Ilib/least-squares-cpp/include/ -Ilib/eigen/ secresketch.c
+bch_codec.o: ./lib/bch/bch_codec.h
+	$(CC) -c $(CFLAGS) ./lib/bch/bch_codec.c
+    
+parameter_estimator.o: parameter_estimator.cpp parameter_estimator.h ./lib/least-squares-cpp/include/lsqcpp.h
+	$(CXX) -c $(CXXFLAGS) -I./lib/least-squares-cpp/include/ -I./lib/eigen/ parameter_estimator.cpp
+
+secresketch.o: secresketch.c
+	$(CC) -c $(CFLAGS) secresketch.c
 
 .PHONY: all clean
 clean:
