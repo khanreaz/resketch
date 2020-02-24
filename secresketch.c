@@ -21,17 +21,17 @@
 #define	POLY_DEGREE     7   /* BCH polynomial degree */
 #define ERROR_CORR_CAP  9   /* erroc correction capability */
 
-/** 
+/**
  * Data is an array containing 2 * sketch_len + ecc_len bytes.
  * It can be considered a struct with minimal alignment of the following form:
- * 
+ *
  * struct data {
  *  uint8_t sketch[sketch_len];
  *  uint8_t rand_x[rand_x_len];
  *  uint8_t ecc[ecc_len];
  * }__attribute__((packed));
- * 
- * TODO: Use bits instead of bytes. 
+ *
+ * TODO: Use bits instead of bytes.
  */
 struct key_recovery_data {
     uint16_t sketch_len;
@@ -42,7 +42,7 @@ struct key_recovery_data {
 
 /**
  * Helper function to print the various uint8_t arrays.
- * 
+ *
  * \param array The array of uint8_t to print.
  * \param length The length of the array to print.
  */
@@ -116,7 +116,7 @@ inline static void corrupt_data(unsigned int *bitflip, uint8_t *data, unsigned i
 }
 
 /**
- * 
+ *
  */
 static double calculate_metric_entropy(uint8_t message[], unsigned int length)
 {
@@ -145,7 +145,7 @@ static double calculate_metric_entropy(uint8_t message[], unsigned int length)
 }
 
 /**
- * 
+ *
  */
 static void parameter_quantization(uint8_t message[], int rx, int tx, int nr_packets, double csi_phase_data[][rx][tx][56])
 {
@@ -161,7 +161,7 @@ static void parameter_quantization(uint8_t message[], int rx, int tx, int nr_pac
             sliding_average += params[j * 5];
 		}
         sliding_average /= WINDOW_SIZE;
-        
+
         /* Quantize. */
     	for(int j = 0; j < WINDOW_SIZE; ++j) {
 			message[i * WINDOW_SIZE + j] = (params[j * 5] > sliding_average) ? 1 : 0;
@@ -169,6 +169,23 @@ static void parameter_quantization(uint8_t message[], int rx, int tx, int nr_pac
 	}
 }
 
+void csi_quantization(uint8_t message[], int rx, int tx, int nr_packets, double csi_phase_data[][rx][tx][56])
+{
+	double sliding_average;
+	/* TODO: Calculate sliding window average of parameters for all antenna combinations. */
+	for (int i = 0; i < nr_packets / WINDOW_SIZE; ++i) {
+		/* Caculate window average. */
+		sliding_average = 0;
+		for(int j = 0; j < WINDOW_SIZE; ++j) {
+			sliding_average += csi_phase_data[i * WINDOW_SIZE + j][0][0][0];
+		}
+		sliding_average /= WINDOW_SIZE;
+		/* Quantize. */
+		for(int j = 0; j < WINDOW_SIZE; ++j) {
+			message[i * WINDOW_SIZE + j] = (csi_phase_data[j][0][0][0] > sliding_average) ? 1 : 0;
+		}
+	}
+}
 /**
  *
  * TODO: Use bits instead of bytes to use AND instead of multiplication for better space and time efficiency.
@@ -178,11 +195,11 @@ struct key_recovery_data* encode(uint8_t message[], unsigned int msg_len, struct
     unsigned int nr_block_bits = calculate_nr_block_bits(bch);
     unsigned int nr_blocks = calculate_nr_blocks(bch);
     uint16_t vector_length = bch->n - bch->ecc_bits;
-    
+
     /* Lengths for key recovery data. */
     uint16_t sketch_len = vector_length * nr_blocks;
-    uint16_t ecc_len = bch->ecc_bits * nr_blocks;    
-    
+    uint16_t ecc_len = bch->ecc_bits * nr_blocks;
+
     /* Create key recovery data struct on heap. */
     uint8_t *key_r_data = malloc(sizeof(struct key_recovery_data) + 2 * sketch_len + ecc_len);
     struct key_recovery_data *key_r = (struct key_recovery_data *) key_r_data;
@@ -190,23 +207,23 @@ struct key_recovery_data* encode(uint8_t message[], unsigned int msg_len, struct
     key_r->rand_x_len = sketch_len;
     key_r->ecc_len = ecc_len;
     uint8_t *sketch_s = key_r_data + sizeof(struct key_recovery_data);
-    uint8_t *rand_x = sketch_s + sketch_len; 
+    uint8_t *rand_x = sketch_s + sketch_len;
     uint8_t *ecc = rand_x + sketch_len;
-    
+
     uint8_t rand_k[vector_length];
     uint8_t bit_mul[vector_length];
     uint8_t data_block[vector_length];
 
     assert(nr_block_bits <= vector_length);
-    
+
     /* Add zero padding to end of data block, so it can be XOR'd with the sketch block. */
     memset(data_block + nr_block_bits, 0, vector_length - nr_block_bits);
-    
+
     /* TODO: Check if this is really necessary. */
     memset(sketch_s, 0, sketch_len);
-    
+
     generate_random_vector(rand_x, sketch_len);
-    
+
 	for (unsigned int i = 0; i < nr_blocks; ++i) {
 		/* Multiplication of random vectors x and k will reduce randomness. */
         /* TODO: No function calls to avoid iterating twice. */
@@ -215,19 +232,19 @@ struct key_recovery_data* encode(uint8_t message[], unsigned int msg_len, struct
 
 		/* Encode bit_mul */
         encodebits_bch(bch, bit_mul, ecc + i * (bch->ecc_bits));
-		
+
         /* Copy block of data from message to data_block with zero padding. */
-        memcpy(data_block, message + i * nr_block_bits, nr_block_bits); 
-        
+        memcpy(data_block, message + i * nr_block_bits, nr_block_bits);
+
         /* XOR data blocks with bit_mul to produce sketch_s block */
         generate_xor_vector(vector_length, data_block, bit_mul, sketch_s + i * (vector_length));
 	}
-    
+
     return (struct key_recovery_data*) key_r_data;
 }
 
 /**
- * 
+ *
  * TODO: Use bits instead of bytes to use AND instead of multiplication for better space and time efficiency.
  */
 void decode(uint8_t message[], unsigned int msg_len, struct bch_control *bch, struct key_recovery_data *key_r_data)
@@ -236,23 +253,23 @@ void decode(uint8_t message[], unsigned int msg_len, struct bch_control *bch, st
     unsigned int nr_blocks = calculate_nr_blocks(bch);
     unsigned int nr_errors;
     unsigned int errloc[ERROR_CORR_CAP];
-    uint16_t vector_length = bch->n - bch->ecc_bits;    
-    
+    uint16_t vector_length = bch->n - bch->ecc_bits;
+
     /* Access data for key recovery. */
     uint8_t *sketch_s = key_r_data->data;
-    uint8_t *rand_x = sketch_s + key_r_data->sketch_len; 
+    uint8_t *rand_x = sketch_s + key_r_data->sketch_len;
     uint8_t *ecc_a = rand_x + key_r_data->sketch_len;
-    
+
     uint8_t data_block[vector_length];
     assert(nr_block_bits <= vector_length);
     /* Add zero padding to end of data block, so it can be XOR'd with the sketch block. */
     memset(data_block + nr_block_bits, 0, vector_length - nr_block_bits);
-    
+
 	uint8_t recov_data_block[vector_length];
     uint8_t r1_b[vector_length];
     uint8_t bit_mul_b[vector_length];
     uint8_t ecc_b[bch->ecc_bits];
-    
+
 	for (unsigned int i = 0; i < nr_blocks; ++i) {
         /* Copy block of data from message to data_block with zero padding. */
         memcpy(data_block, message + i * nr_block_bits, nr_block_bits);
@@ -267,7 +284,7 @@ void decode(uint8_t message[], unsigned int msg_len, struct bch_control *bch, st
 
 		/* Correct  r1, it becomes r2, variable name DOES NOT change! */
 		corrupt_data(errloc, r1_b, nr_errors); // After correction r1_b is as same as bit_mul
-        
+
 		/* BCH encode r2,  it becomes r3 , variable name DOES NOT change! */
 		memset(ecc_b, 0, bch->ecc_bits);
 		encodebits_bch(bch, r1_b, ecc_b);
@@ -290,7 +307,7 @@ int main(void)
 	time_t begin = time(NULL);  // to calculate total execution time;
 	unsigned int nrPkt = 128;   // to produce 128 bits;
 	unsigned int nr_block_bits;   // Nr of bits in each blocks;
-	unsigned int nr_blocks;      // Nr of blocks;    
+	unsigned int nr_blocks;      // Nr of blocks;
     unsigned int generator = 0;
     struct bch_control *bch;
     struct key_recovery_data *key_r_data;
@@ -320,9 +337,12 @@ int main(void)
 
     printf("\n**** Quantization (Moving Window) ****\n");
 	uint8_t *message_a = malloc(nrPkt * sizeof(uint8_t)); // quantized bits
-	uint8_t *message_b = malloc(nrPkt * sizeof(uint8_t)); // Bob: for quantized bits	
-    parameter_quantization(message_a, 3, 3, nrPkt, alice_phase);
-    parameter_quantization(message_b, 3, 3, nrPkt, bob_phase);
+	uint8_t *message_b = malloc(nrPkt * sizeof(uint8_t)); // Bob: for quantized bits
+    // parameter_quantization(message_a, 3, 3, nrPkt, alice_phase);
+    // parameter_quantization(message_b, 3, 3, nrPkt, bob_phase);
+
+	csi_quantization(message_a, 3, 3, nrPkt, alice_phase);
+	csi_quantization(message_b, 3, 3, nrPkt, bob_phase);
 
 	#if (DEBUG_KEYGEN != 0)
     {
@@ -347,12 +367,12 @@ int main(void)
 
 	printf("\n**** Node A encodes  ****\n");
     key_r_data = encode(message_a, nrPkt, bch);
-    
+
     printf("\n\n/* Node A sends sketch_a_s, rand_a_x and ecc_a to Node B */\n\n");
-    
+
 	printf("\n**** Node B decodes  ****\n");
     decode(message_b, nrPkt, bch, key_r_data);
-    
+
 	/* Check if correctly reconstructed. */
     #if (DEBUG_KEYGEN != 0)
 	{
@@ -370,7 +390,7 @@ int main(void)
         }
     }
     #endif
-    
+
     /* Calculate Metric Entropy */
     {
         double entropy;
@@ -378,7 +398,7 @@ int main(void)
         entropy = calculate_metric_entropy(message_a, nrPkt);
         printf("Metric entropy of quantized bits: %f\n\n", entropy);
     }
-    
+
     free(message_a);
     free(message_b);
 
