@@ -1,0 +1,47 @@
+**Node A**
+Collect `CSI` from sufficeint channel measurements
+(at least 128 packets)
+
+**EXTRACT** `parameters` from CSI
+
+**QUANTIZE** the useful parameter (1st one)
+Moving Window method ( `message_a` )
+
+**GENERATE** 1st random vector ( `rand_x` )
+
+Generate 2nd random vector ( `rand_k` )
+
+/*nrBlockBits = (BCH->n - BCH->ecc) + 1*/
+Define block length `nrBlockBits`
+
+
+calculate number of blocks ( `nrBlocks` )
+
+
+
+for (i = 0; i= < nrBlocks; i++){
+/* data_a_block, rand_x_block, rand_k_block*/
+create blocks from
+( `message_a` )
+( `rand_x` )
+( `rand_k` )
+
+/* bit_mul_a*/
+    **MULTIPLY** `rand_x_block` with `rand_k_block`
+
+    /* ecc_a_block*/
+    **BCH-ENCODE**  `bit_mul_a`
+
+/* ecc_a */
+    **CONCATENATE**  `ecc_a_block`
+
+/*sketch_a_s_block*/
+**XOR**  `data_a_block` with  `bit_mul_a`
+
+/* sketch_a_s*/
+**CONCATENATE**   `sketch_a_s_block `
+
+}
+
+**SEND** to Node B
+`rand_x`, `ecc_a`, and `sketch_s`

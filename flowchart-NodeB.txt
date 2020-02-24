@@ -1,0 +1,49 @@
+**Node B**
+Collect `CSI` from sufficeint channel measurements
+(at least 128 packets)
+
+**EXTRACT** `parameters` from CSI
+
+**QUANTIZE** the useful parameter (1st one)
+Moving Window method ( `message_b` )
+
+
+/*nrBlockBits = (BCH->n - BCH->ecc) + 1*/
+Define block length ( `nrBlockBits` )
+
+
+calculate number of blocks ( `nrBlocks` )
+
+
+
+for (i = 0; i= < nrBlocks; i++){
+/* data_b_block
+sketch_s_block
+rand_x_block
+ecc_a_block*/
+
+create blocks from
+( `message_b` )
+( `sketch_s` )
+( `rand_x` )
+( `ecc_a` )
+
+/*r1*/
+**XOR**  `data_b_block` with  `sketch_s_block`
+
+/* r2*/
+**BCH-DECODE**  `r1` with `ecc_a_block`
+
+
+/* bit_mul_b*/
+    **MULTIPLY** `rand_x_block` with `r2`
+
+/*data_a_block*/
+**XOR**  `sketch_s` with  `bit_mul_b`
+
+/* message_a*/
+**CONCATENATE**   `data_a_block `
+
+}
+
+`message_a` is recovered
